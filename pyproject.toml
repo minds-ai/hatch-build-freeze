@@ -1,6 +1,6 @@
 [project]
 name = "hatch-build-freeze"
-version = "1.0.0"
+version = "1.0.1"
 description = "Hatch Dependency Freezing Plugin: Enhancing Build Consistency"
 authors = [{ name = "minds.ai, Inc.", email = "contact@minds.ai" }]
 readme = "README.md"
