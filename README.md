@@ -4,10 +4,10 @@
 
 Streamline your Python packaging workflow with this Hatch plugin designed to freeze your project's
 dependency tree. By automatically resolving and pinning all direct and transitive dependencies into
-a manifest file during the build process, it ensures: Reproducible Builds: Guarantee that your
-package builds with the same dependency versions every time. Consistent Environments: Simplify the
-creation of identical environments across development, testing, and production. Dependency
-Transparency: Provides a clear, version-locked list of all project dependencies.
+a manifest file during the build process, it ensures:
+* Reproducible Builds: Guarantee that your package builds with the same dependency versions every time.
+* Consistent Environments: Simplify the creation of identical environments across development, testing, and production.
+* Dependency Transparency: Provides a clear, version-locked list of all project dependencies.
 
 
 ## Configuration
