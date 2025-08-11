@@ -58,7 +58,7 @@ def base_project_structure(tmp_path: Path, request) -> Path:
 
     hatch_freeze_options_str = ""
     if hatch_freeze_config:  # Only add options if config is provided
-        options = ["log-level= 'info'"]
+        options = []
         for key, value in hatch_freeze_config.items():
             options.append(f"{key} = {_format_toml_value(value)}")
         hatch_freeze_options_str = "\n".join(options)
@@ -115,14 +115,19 @@ def returns_pyproject_data_and_lock(mock_uv_project: Path) -> tuple[dict, str | 
         pytest.param({"groups": ["g1"]}, id="with_groups"),
         pytest.param({"extras": ["e1"]}, id="with_extras"),
         pytest.param({"groups": []}, id="empty_groups"),
-        pytest.param({"groups": ["g1"], "extras": ["e1"], "uv-args": ["--prerelease=allow"]},
-                     id="with_groups_and_extras_prerelease"),
-        pytest.param({"groups": ["g1"], "uv-args": ["--prerelease=allow"]},
-                     id="with_groups_prerelease"),
-        pytest.param({"extras": ["e1"], "uv-args": ["--prerelease=allow"]},
-                     id="with_extras_prerelease"),
-        pytest.param({"groups": [], "uv-args": ["--prerelease=allow"]},
-                     id="empty_groups_prerelease"),
+        pytest.param(
+            {"groups": ["g1"], "extras": ["e1"], "uv-args": ["--prerelease=allow"]},
+            id="with_groups_and_extras_prerelease",
+        ),
+        pytest.param(
+            {"groups": ["g1"], "uv-args": ["--prerelease=allow"]}, id="with_groups_prerelease"
+        ),
+        pytest.param(
+            {"extras": ["e1"], "uv-args": ["--prerelease=allow"]}, id="with_extras_prerelease"
+        ),
+        pytest.param(
+            {"groups": [], "uv-args": ["--prerelease=allow"]}, id="empty_groups_prerelease"
+        ),
     ],
     indirect=True,
 )
@@ -195,14 +200,19 @@ def verify_dependencies(pkg_data_bytes: bytes, test_type: str) -> None:
         pytest.param({"groups": ["g1"]}, id="with_groups"),
         pytest.param({"extras": ["e1"]}, id="with_extras"),
         pytest.param({"groups": []}, id="empty_groups"),
-        pytest.param({"groups": ["g1"], "extras": ["e1"], "uv-args": ["--prerelease=allow"]},
-                     id="with_groups_and_extras_prerelease"),
-        pytest.param({"groups": ["g1"], "uv-args": ["--prerelease=allow"]},
-                     id="with_groups_prerelease"),
-        pytest.param({"extras": ["e1"], "uv-args": ["--prerelease=allow"]},
-                     id="with_extras_prerelease"),
-        pytest.param({"groups": [], "uv-args": ["--prerelease=allow"]},
-                     id="empty_groups_prerelease"),
+        pytest.param(
+            {"groups": ["g1"], "extras": ["e1"], "uv-args": ["--prerelease=allow"]},
+            id="with_groups_and_extras_prerelease",
+        ),
+        pytest.param(
+            {"groups": ["g1"], "uv-args": ["--prerelease=allow"]}, id="with_groups_prerelease"
+        ),
+        pytest.param(
+            {"extras": ["e1"], "uv-args": ["--prerelease=allow"]}, id="with_extras_prerelease"
+        ),
+        pytest.param(
+            {"groups": [], "uv-args": ["--prerelease=allow"]}, id="empty_groups_prerelease"
+        ),
         pytest.param({"groups": ["g1"], "extras": ["e1"]}, id="dont-freeze-with-groups-and-extras"),
         pytest.param({"groups": ["g1"]}, id="dont-freeze-with-groups"),
         pytest.param({"extras": ["e1"]}, id="dont-freeze-with-extras"),

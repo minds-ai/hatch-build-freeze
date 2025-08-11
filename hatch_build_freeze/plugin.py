@@ -78,13 +78,9 @@ class HatchBuildFreezePlugin(BuildHookInterface):
         )
         pyproject_path = Path(self.root) / "pyproject.toml"
         if not pyproject_path.exists():
-            self.logger.error(
-                "'%s' not found. Cannot generate requirements.", pyproject_path
-            )
+            self.logger.error("'%s' not found. Cannot generate requirements.", pyproject_path)
             return False
-        package_name = tomlkit.loads(pyproject_path.read_text(encoding="utf-8"))[
-            "project"
-        ]["name"]
+        package_name = tomlkit.loads(pyproject_path.read_text(encoding="utf-8"))["project"]["name"]
         command = [
             "uv",
             "export",
@@ -114,9 +110,7 @@ class HatchBuildFreezePlugin(BuildHookInterface):
                 cwd=self.root,
             )
             if process.returncode == 0:
-                self.logger.info(
-                    "Successfully generated '%s'.", self.requirements_file_path.name
-                )
+                self.logger.info("Successfully generated '%s'.", self.requirements_file_path.name)
                 if process.stdout:
                     self.logger.debug("uv stdout:\n%s", process.stdout)
                 if process.stderr:  # uv often outputs to stderr even on success
@@ -137,9 +131,7 @@ class HatchBuildFreezePlugin(BuildHookInterface):
             )
             return False
         except Exception:  # pylint: disable=broad-exception-caught
-            self.logger.error(
-                "An unexpected error occurred while running uv", exc_info=True
-            )
+            self.logger.error("An unexpected error occurred while running uv", exc_info=True)
             return False
 
     def initialize(self, version: str, build_data: dict[str, Any]) -> None:
@@ -162,9 +154,7 @@ class HatchBuildFreezePlugin(BuildHookInterface):
             )
             return
 
-        self.logger.info(
-            "Reading dependencies from '%s'.", self.requirements_file_path.name
-        )
+        self.logger.info("Reading dependencies from '%s'.", self.requirements_file_path.name)
         try:
             dependencies = self._parse_requirements_file(self.requirements_file_path)
             if "dependencies" not in build_data:
@@ -190,13 +180,9 @@ class HatchBuildFreezePlugin(BuildHookInterface):
                     self.requirements_file_path.name,
                 )
         except Exception:  # pylint: disable=broad-exception-caught
-            self.logger.error(
-                "Failed to parse %s", self.requirements_file_path.name, exc_info=True
-            )
+            self.logger.error("Failed to parse %s", self.requirements_file_path.name, exc_info=True)
 
-    def finalize(
-        self, version: str, build_data: dict[str, Any], artifact_path: str
-    ) -> None:
+    def finalize(self, version: str, build_data: dict[str, Any], artifact_path: str) -> None:
         """Called after the build process ends."""
         if self.requirements_file_path.exists():
             self.logger.info(
