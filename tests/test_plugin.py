@@ -14,6 +14,7 @@
 # ==============================================================================
 """Tests for Hatch build freeze plugin."""
 
+import os
 import subprocess
 import tarfile
 import zipfile
@@ -57,7 +58,7 @@ def base_project_structure(tmp_path: Path, request) -> Path:
 
     hatch_freeze_options_str = ""
     if hatch_freeze_config:  # Only add options if config is provided
-        options = []
+        options = ["log-level= 'info'"]
         for key, value in hatch_freeze_config.items():
             options.append(f"{key} = {_format_toml_value(value)}")
         hatch_freeze_options_str = "\n".join(options)
@@ -92,6 +93,21 @@ g1 = ["click==8.2.1",]
     return project_dir
 
 
+def returns_pyproject_data_and_lock(mock_uv_project: Path) -> tuple[dict, str | None]:
+    """Returns the TOML data and the prerelease argument if it exists."""
+    toml_data = tomlkit.loads((mock_uv_project / "pyproject.toml").read_text())
+    freeze_config = toml_data["tool"]["hatch"]["build"]["hooks"]["hatch-build-freeze"]
+    prerelease_arg = next(
+        (arg for arg in freeze_config.get("uv-args", []) if arg.startswith("--prerelease")),
+        None,
+    )
+    if prerelease_arg:
+        subprocess.check_output(["uv", "lock", prerelease_arg], cwd=mock_uv_project)
+    else:
+        subprocess.check_output(["uv", "lock"], cwd=mock_uv_project)
+    return toml_data, prerelease_arg
+
+
 @pytest.mark.parametrize(
     "mock_uv_project",
     [
@@ -99,14 +115,21 @@ g1 = ["click==8.2.1",]
         pytest.param({"groups": ["g1"]}, id="with_groups"),
         pytest.param({"extras": ["e1"]}, id="with_extras"),
         pytest.param({"groups": []}, id="empty_groups"),
+        pytest.param({"groups": ["g1"], "extras": ["e1"], "uv-args": ["--prerelease=allow"]},
+                     id="with_groups_and_extras_prerelease"),
+        pytest.param({"groups": ["g1"], "uv-args": ["--prerelease=allow"]},
+                     id="with_groups_prerelease"),
+        pytest.param({"extras": ["e1"], "uv-args": ["--prerelease=allow"]},
+                     id="with_extras_prerelease"),
+        pytest.param({"groups": [], "uv-args": ["--prerelease=allow"]},
+                     id="empty_groups_prerelease"),
     ],
     indirect=True,
 )
 def test_build_hook(mock_uv_project: Path, request) -> None:
     """Tests the standalone implementation of the build hook."""
     syspath.insert(0, str(mock_uv_project))
-    subprocess.check_output(["uv", "lock", "--prerelease=allow"], cwd=mock_uv_project)
-    toml_data = tomlkit.loads((mock_uv_project / "pyproject.toml").read_text())
+    toml_data, prerelease_arg = returns_pyproject_data_and_lock(mock_uv_project)
     hook = plugin.HatchBuildFreezePlugin(
         mock_uv_project,
         toml_data["tool"]["hatch"]["build"]["hooks"]["hatch-build-freeze"],
@@ -125,15 +148,15 @@ def test_build_hook(mock_uv_project: Path, request) -> None:
         "colorama==0.4.6 ; sys_platform == 'win32'",
         "tqdm==4.67.1",
     ]
-    if request.node.callspec.id == "with_groups_and_extras":
+    if request.node.callspec.id in ("with_groups_and_extras", "with_groups_and_extras_prerelease"):
         expected_dependencies.extend(["click==8.2.1", "psutil==6.1.1"])
-    elif request.node.callspec.id == "with_groups":
+    elif request.node.callspec.id in ("with_groups", "with_groups_prerelease"):
         expected_dependencies.append("click==8.2.1")
-    elif request.node.callspec.id == "with_extras":
+    elif request.node.callspec.id in ("with_extras", "with_extras_prerelease"):
         expected_dependencies.append("psutil==6.1.1")
 
     assert set(dependencies) == set(expected_dependencies)
-    assert not hook.uv_args
+    assert not hook.uv_args if not prerelease_arg else hook.uv_args == ["--prerelease=allow"]
     assert hook.requirements_file_path.exists()
     version = "0.1.0"
     hook.initialize(version, {})
@@ -151,12 +174,17 @@ def verify_dependencies(pkg_data_bytes: bytes, test_type: str) -> None:
         "tqdm==4.67.1",
         "psutil==6.1.1; extra == 'e1'",
     }
-    if test_type == "with_groups_and_extras":
+    if test_type in ("with_groups_and_extras", "with_groups_and_extras_prerelease"):
         expected_dependencies.update({"click==8.2.1", "psutil==6.1.1"})
-    elif test_type == "with_groups":
+    elif test_type in ("with_groups", "with_groups_prerelease"):
         expected_dependencies.add("click==8.2.1")
-    elif test_type == "with_extras":
+    elif test_type in ("with_extras", "with_extras_prerelease"):
         expected_dependencies.add("psutil==6.1.1")
+    elif "dont-freeze" in test_type:
+        expected_dependencies = {
+            "tqdm<=4.67.1",
+            "psutil==6.1.1; extra == 'e1'",
+        }
     assert dependencies == expected_dependencies
 
 
@@ -167,14 +195,31 @@ def verify_dependencies(pkg_data_bytes: bytes, test_type: str) -> None:
         pytest.param({"groups": ["g1"]}, id="with_groups"),
         pytest.param({"extras": ["e1"]}, id="with_extras"),
         pytest.param({"groups": []}, id="empty_groups"),
+        pytest.param({"groups": ["g1"], "extras": ["e1"], "uv-args": ["--prerelease=allow"]},
+                     id="with_groups_and_extras_prerelease"),
+        pytest.param({"groups": ["g1"], "uv-args": ["--prerelease=allow"]},
+                     id="with_groups_prerelease"),
+        pytest.param({"extras": ["e1"], "uv-args": ["--prerelease=allow"]},
+                     id="with_extras_prerelease"),
+        pytest.param({"groups": [], "uv-args": ["--prerelease=allow"]},
+                     id="empty_groups_prerelease"),
+        pytest.param({"groups": ["g1"], "extras": ["e1"]}, id="dont-freeze-with-groups-and-extras"),
+        pytest.param({"groups": ["g1"]}, id="dont-freeze-with-groups"),
+        pytest.param({"extras": ["e1"]}, id="dont-freeze-with-extras"),
+        pytest.param({"groups": []}, id="dont-freeze"),
     ],
     indirect=True,
 )
 def test_build(mock_uv_project: Path, request) -> None:
     """Tests the build process on a sample project with the plugin."""
     syspath.insert(0, str(mock_uv_project))
-    subprocess.check_output(["uv", "lock", "--prerelease=allow"], cwd=mock_uv_project)
-    subprocess.check_output(["hatch", "build"], cwd=mock_uv_project)
+    env = os.environ.copy()
+    if "dont-freeze" in request.node.callspec.id:
+        env["HATCH_BUILD_FREEZE_ENABLED"] = "0"
+    else:
+        env["HATCH_BUILD_FREEZE_ENABLED"] = "1"
+    returns_pyproject_data_and_lock(mock_uv_project)
+    subprocess.check_output(["hatch", "-v", "build"], cwd=mock_uv_project, env=env)
     wheel_path = mock_uv_project / "dist" / "my_test_package-0.1.0-py3-none-any.whl"
     sdist_path = mock_uv_project / "dist" / "my_test_package-0.1.0.tar.gz"
     assert wheel_path.exists()
