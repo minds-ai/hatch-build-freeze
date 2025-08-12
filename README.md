@@ -26,10 +26,10 @@ build-backend = "hatchling.build"
 ```
 
 ## Disable the plugin
-By default, the plugin is enabled. To disable it, use the environment variable `HATCH_BUILD_FREEZE_ENABLED`
+By default, the plugin is enabled. To disable it, use the environment variable `HATCH_BUILD_FREEZE_DISABLED`
 
 ```Shell
-HATCH_BUILD_FREEZE_ENABLED=0 hatch build
+HATCH_BUILD_FREEZE_DISABLED=1 hatch build
 ```
 
 ## Plugin Configuration

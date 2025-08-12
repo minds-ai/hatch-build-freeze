@@ -139,9 +139,9 @@ class HatchBuildFreezePlugin(BuildHookInterface):
 
         Generates requirements.txt, then includes its dependencies.
         """
-        if os.getenv("HATCH_BUILD_FREEZE_ENABLED", "1").lower() not in ("1", "true"):
+        if os.getenv("HATCH_BUILD_FREEZE_DISABLED", "0").lower() not in ("0", "false"):
             self.logger.info(
-                "Hatch Build Freeze is disabled. Set HATCH_BUILD_FREEZE_ENABLED=1 to enable."
+                "Hatch Build Freeze is disabled. Set HATCH_BUILD_FREEZE_DISABLED=0 to enable."
             )
             return
         generation_successful = self._generate_requirements_file()

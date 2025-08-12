@@ -225,9 +225,9 @@ def test_build(mock_uv_project: Path, request) -> None:
     syspath.insert(0, str(mock_uv_project))
     env = os.environ.copy()
     if "dont-freeze" in request.node.callspec.id:
-        env["HATCH_BUILD_FREEZE_ENABLED"] = "0"
+        env["HATCH_BUILD_FREEZE_DISABLED"] = "1"
     else:
-        env["HATCH_BUILD_FREEZE_ENABLED"] = "1"
+        env["HATCH_BUILD_FREEZE_DISABLED"] = "0"
     returns_pyproject_data_and_lock(mock_uv_project)
     subprocess.check_output(["hatch", "-v", "build"], cwd=mock_uv_project, env=env)
     wheel_path = mock_uv_project / "dist" / "my_test_package-0.1.0-py3-none-any.whl"
