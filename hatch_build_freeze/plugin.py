@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -85,7 +86,6 @@ class HatchBuildFreezePlugin(BuildHookInterface):
             "export",
             "--locked",
             "--format=requirements.txt",
-            "--prerelease=allow",
             "--output-file",
             str(self.requirements_file_path),
             "--no-editable",
@@ -139,6 +139,11 @@ class HatchBuildFreezePlugin(BuildHookInterface):
 
         Generates requirements.txt, then includes its dependencies.
         """
+        if os.getenv("HATCH_BUILD_FREEZE_DISABLED", "0").lower() not in ("0", "false"):
+            self.logger.info(
+                "Hatch Build Freeze is disabled. Set HATCH_BUILD_FREEZE_DISABLED=0 to enable."
+            )
+            return
         generation_successful = self._generate_requirements_file()
 
         if not generation_successful and not self.requirements_file_path.exists():

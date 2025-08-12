@@ -36,7 +36,9 @@ jobs:
       run: uv run ruff check
 
     - name: Run tests with pytest
-      run: pytest -v tests/
+      run: |
+        pip cache purge
+        pytest -v tests/
 
   build:
     name: Build Package

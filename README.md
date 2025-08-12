@@ -25,6 +25,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.hooks.hatch-build-freeze]
 ```
 
+## Disable the plugin
+By default, the plugin is enabled. To disable it, use the environment variable `HATCH_BUILD_FREEZE_DISABLED`
+
+```Shell
+HATCH_BUILD_FREEZE_DISABLED=1 hatch build
+```
+
 ## Plugin Configuration
 
 
@@ -50,5 +57,5 @@ The following options are supported:
     A list of additional command-line arguments to pass directly to the `uv export` command.
     ```toml
     [tool.hatch.build.hooks.hatch-build-freeze]
-    uv-args = ["--resolution=lowest-direct", "--no-header"]
+    uv-args = ["--resolution=lowest-direct", "--no-header", "--prerelease=allow"]
     ```
